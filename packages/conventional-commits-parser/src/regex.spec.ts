@@ -429,11 +429,6 @@ describe('conventional-commits-parser', () => {
         })
 
         it('should match JIRA-123 like reference parts', () => {
-          referenceParts = getParserRegexes({
-            issuePrefixes: ['#'],
-            issueIdPattern: '[\\w-]+'
-          }).referenceParts
-
           const match = referenceParts.exec('#JIRA-123')
 
           expect(match?.[0]).toBe('#JIRA-123')
@@ -443,11 +438,6 @@ describe('conventional-commits-parser', () => {
         })
 
         it('should match ClickUp-style reference parts ending with letters', () => {
-          referenceParts = getParserRegexes({
-            issuePrefixes: ['#'],
-            issueIdPattern: '[\\w-]+'
-          }).referenceParts
-
           const match = referenceParts.exec('#CU-123abc')
 
           expect(match?.[0]).toBe('#CU-123abc')
@@ -533,41 +523,22 @@ describe('conventional-commits-parser', () => {
           expect(match).toBe(null)
         })
 
-        it('should not match letter-based prefixes inside words (#1570)', () => {
+        it('should not match prefixes inside of words (#1570)', () => {
           referenceParts = getParserRegexes({
             issuePrefixes: ['#', 'gh-']
           }).referenceParts
 
           expect(referenceParts.exec('Removes old copies of tough-cookie, qs, and diff')).toBe(null)
-          referenceParts.lastIndex = 0
-          expect(referenceParts.exec('Fixes the high-contrast theme')).toBe(null)
-          referenceParts.lastIndex = 0
-          expect(referenceParts.exec('Discussed in the #general channel')).toBe(null)
+          expect(referenceParts.exec('Adds a high-5 animation')).toBe(null)
         })
 
-        it('should still match numeric issue references with gh- prefix (#1570)', () => {
+        it('should not match issues without digits (#1570)', () => {
           referenceParts = getParserRegexes({
             issuePrefixes: ['#', 'gh-']
           }).referenceParts
 
-          const body = 'Closes #123 and GH-45'
-          let match = referenceParts.exec(body)
-
-          expect(match?.[2]).toBe('#')
-          expect(match?.[3]).toBe('123')
-          match = referenceParts.exec(body)
-          expect(match?.[2]?.toLowerCase()).toBe('gh-')
-          expect(match?.[3]).toBe('45')
-        })
-
-        it('should not match non-numeric issue ids by default', () => {
-          referenceParts = getParserRegexes({
-            issuePrefixes: ['#']
-          }).referenceParts
-
-          const match = referenceParts.exec('#abc')
-
-          expect(match).toBe(null)
+          expect(referenceParts.exec('Discussed in the #general channel')).toBe(null)
+          expect(referenceParts.exec('Deploys the docs to gh-pages')).toBe(null)
         })
 
         it('should escape regex special chars when used inside `issuePrefixes`', () => {

@@ -35,19 +35,19 @@ function getNotesRegex(
 
 function getReferencePartsRegex(
   issuePrefixes: (string | RegExp)[] | undefined,
-  issuePrefixesCaseSensitive: boolean | undefined,
-  issueIdPattern = '\\d+'
+  issuePrefixesCaseSensitive: boolean | undefined
 ) {
   if (!issuePrefixes) {
     return nomatchRegex
   }
 
   const flags = issuePrefixesCaseSensitive ? 'g' : 'gi'
+  const repositoryChar = '[\\w-\\.\\/]'
 
-  // Require a word boundary before the optional repository + prefix so letter-based
-  // prefixes like `gh-` cannot match inside words (`tough-cookie`). Issue ids default
-  // to digits to mirror GitHub autolinks (`#general` is not an issue reference).
-  return new RegExp(`(?:.*?)??\\s*(?<![\\w-])(?:([\\w.-]+(?:/[\\w.-]+)?))?(${joinOr(issuePrefixes)})(${issueIdPattern})(?=\\s|$|[,;.)\\]])`, flags)
+  // A reference starts a word, and its repository is the whole word before the prefix,
+  // so `gh-` is not a prefix inside of `tough-cookie` or `high-5`.
+  // An issue has a digit, so `#general` is not a reference.
+  return new RegExp(`(?:.*?)??\\s*(?<!${repositoryChar})(?:(${repositoryChar}+)(?!${repositoryChar}))?(${joinOr(issuePrefixes)})((?=[\\w-]*\\d)[\\w-]+)(?=\\s|$|[,;.)\\]])`, flags)
 }
 
 function getReferencesRegex(
@@ -85,10 +85,10 @@ function getFooterTokenRegex(
  * @returns Regexes.
  */
 export function getParserRegexes(
-  options: Pick<ParserOptions, 'noteKeywords' | 'notesPattern' | 'issuePrefixes' | 'issuePrefixesCaseSensitive' | 'issueIdPattern' | 'referenceActions'> = {}
+  options: Pick<ParserOptions, 'noteKeywords' | 'notesPattern' | 'issuePrefixes' | 'issuePrefixesCaseSensitive' | 'referenceActions'> = {}
 ): ParserRegexes {
   const notes = getNotesRegex(options.noteKeywords, options.notesPattern)
-  const referenceParts = getReferencePartsRegex(options.issuePrefixes, options.issuePrefixesCaseSensitive, options.issueIdPattern)
+  const referenceParts = getReferencePartsRegex(options.issuePrefixes, options.issuePrefixesCaseSensitive)
   const references = getReferencesRegex(options.referenceActions)
   // In a footer the keyword is a token, which may be followed by a colon: `Closes: #1`
   const footerReferences = getReferencesRegex(options.referenceActions, ':?')

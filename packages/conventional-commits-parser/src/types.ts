@@ -51,11 +51,6 @@ export interface ParserOptions {
    */
   issuePrefixesCaseSensitive?: boolean
   /**
-   * RegExp source for the issue id after an issue prefix. Defaults to `\d+`
-   * (GitHub-style numeric ids). Use `[\\w-]+` for trackers like Jira or ClickUp.
-   */
-  issueIdPattern?: string
-  /**
    * Keywords to reference an issue. This value is case **insensitive**.
    */
   referenceActions?: (string | RegExp)[]

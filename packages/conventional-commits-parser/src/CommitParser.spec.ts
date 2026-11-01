@@ -1148,7 +1148,7 @@ describe('conventional-commits-parser', () => {
         ])
       })
 
-      it('should not treat mid-word gh- or non-numeric hash tokens as references (#1570)', () => {
+      it('should not reference issues inside of words or without digits (#1570)', () => {
         const parser = new CommitParser({
           issuePrefixes: ['#', 'gh-']
         })
@@ -1158,28 +1158,43 @@ describe('conventional-commits-parser', () => {
           'Fixes the high-contrast theme',
           'Discussed in the #general channel'
         ]) {
-          const commit = parser.parse(`fix: subject\n\n${body}`)
-
-          expect(commit.references).toEqual([])
+          expect(parser.parse(`fix: subject\n\n${body}`).references).toEqual([])
         }
 
-        const commit = parser.parse('fix: subject\n\nCloses #123 and GH-45')
+        expect(parser.parse('fix: subject\n\nCloses #123 and GH-45').references).toEqual([
+          {
+            action: 'Closes',
+            owner: null,
+            repository: null,
+            issue: '123',
+            raw: '#123',
+            prefix: '#'
+          },
+          {
+            action: 'Closes',
+            owner: null,
+            repository: null,
+            issue: '45',
+            raw: ' and GH-45',
+            prefix: 'GH-'
+          }
+        ])
+      })
 
-        expect(commit.references.map(({ repository, prefix, issue }) => ({
-          repository,
-          prefix: prefix.toLowerCase(),
-          issue
-        }))).toEqual([
+      it('should reference only numeric issues with a lookahead in the prefix', () => {
+        const parser = new CommitParser({
+          issuePrefixes: [/#(?=\d+\b)/]
+        })
+
+        expect(parser.parse('style: use #3b82f6 for links\n\nCloses #12').references).toEqual([
           {
- repository: null,
-prefix: '#',
-issue: '123' 
-},
-          {
- repository: null,
-prefix: 'gh-',
-issue: '45' 
-}
+            action: 'Closes',
+            owner: null,
+            repository: null,
+            issue: '12',
+            raw: '#12',
+            prefix: '#'
+          }
         ])
       })
     })
